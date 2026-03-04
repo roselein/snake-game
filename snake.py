@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import random
-import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
@@ -25,9 +24,6 @@ class SnakeGame:
     score: int = 0
     alive: bool = True
     wrap_walls: bool = True
-    time_limit_sec: int = 60
-    started_at: float = 0.0
-    ended_reason: str = ""
 
     def __post_init__(self) -> None:
         self.reset()
@@ -39,14 +35,7 @@ class SnakeGame:
         self.next_direction = "right"
         self.score = 0
         self.alive = True
-        self.ended_reason = ""
-        self.started_at = time.monotonic()
         self.food = self._spawn_food()
-
-    def remaining_time(self) -> int:
-        elapsed = time.monotonic() - self.started_at
-        remaining = self.time_limit_sec - int(elapsed)
-        return max(0, remaining)
 
     def _spawn_food(self) -> Tuple[int, int]:
         occupied = set(self.snake)
@@ -77,10 +66,6 @@ class SnakeGame:
     def step(self) -> None:
         if not self.alive:
             return
-        if self.remaining_time() <= 0:
-            self.alive = False
-            self.ended_reason = "time_up"
-            return
 
         self.direction = self.next_direction
         x, y = self.snake[0]
@@ -106,7 +91,6 @@ class SnakeGame:
             new_head in body_for_collision
         ):
             self.alive = False
-            self.ended_reason = "collision"
             return
 
         self.snake.insert(0, new_head)
@@ -126,8 +110,6 @@ class SnakeGame:
             "score": self.score,
             "alive": self.alive,
             "direction": self.direction,
-            "time_left": self.remaining_time(),
-            "ended_reason": self.ended_reason,
         }
 
 
@@ -196,19 +178,6 @@ INDEX_HTML = """
       background: #101a2b;
       border: 1px solid #2a3a59;
     }
-    .pill-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .timer {
-      font-weight: 700;
-      padding: 5px 10px;
-      border-radius: 999px;
-      background: #101a2b;
-      border: 1px solid #2a3a59;
-      color: #8dd7ff;
-    }
     canvas {
       width: 100%;
       aspect-ratio: 1 / 1;
@@ -263,10 +232,7 @@ INDEX_HTML = """
   <div class="card">
     <div class="top">
       <h1>Snake</h1>
-      <div class="pill-row">
-        <div class="timer">Time: <span id="timer">60</span>s</div>
-        <div class="score">Score: <span id="score">0</span></div>
-      </div>
+      <div class="score">Score: <span id="score">0</span></div>
     </div>
     <canvas id="game" width="600" height="600"></canvas>
     <div class="controls">
@@ -288,12 +254,11 @@ INDEX_HTML = """
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("score");
-    const timerEl = document.getElementById("timer");
     const stateLabel = document.getElementById("stateLabel");
     const newGameBtn = document.getElementById("newGameBtn");
     let gameId = null;
     let state = null;
-    let tickMs = 180;
+    let tickMs = 165;
 
     const keyMap = {
       ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
@@ -356,14 +321,7 @@ INDEX_HTML = """
     function render() {
       if (!state) return;
       scoreEl.textContent = state.score;
-      timerEl.textContent = state.time_left;
-      if (state.alive) {
-        stateLabel.textContent = "";
-      } else if (state.ended_reason === "time_up") {
-        stateLabel.textContent = "Time Up";
-      } else {
-        stateLabel.textContent = "Game Over";
-      }
+      stateLabel.textContent = state.alive ? "" : "Game Over";
       drawGrid(state);
     }
 
