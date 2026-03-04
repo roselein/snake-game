@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: python-snake-game
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn snake:app
