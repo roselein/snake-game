@@ -23,6 +23,7 @@ class SnakeGame:
     food: Tuple[int, int] = (0, 0)
     score: int = 0
     alive: bool = True
+    wrap_walls: bool = True
 
     def __post_init__(self) -> None:
         self.reset()
@@ -77,21 +78,24 @@ class SnakeGame:
         elif self.direction == "right":
             x += 1
 
-        new_head = (x, y)
+        if self.wrap_walls:
+            x %= self.width
+            y %= self.height
 
-        if (
-            x < 0
-            or x >= self.width
-            or y < 0
-            or y >= self.height
-            or new_head in self.snake
+        new_head = (x, y)
+        grows = new_head == self.food
+        # Moving into the old tail position is valid when the snake is not growing.
+        body_for_collision = self.snake if grows else self.snake[:-1]
+
+        if (not self.wrap_walls and (x < 0 or x >= self.width or y < 0 or y >= self.height)) or (
+            new_head in body_for_collision
         ):
             self.alive = False
             return
 
         self.snake.insert(0, new_head)
 
-        if new_head == self.food:
+        if grows:
             self.score += 1
             self.food = self._spawn_food()
         else:
@@ -209,6 +213,19 @@ INDEX_HTML = """
       font-weight: 700;
       color: #ffcf5d;
     }
+    .dpad {
+      margin-top: 10px;
+      display: grid;
+      place-items: center;
+      gap: 8px;
+    }
+    .dpad-row {
+      display: flex;
+      gap: 8px;
+    }
+    .dpad-btn {
+      min-width: 74px;
+    }
   </style>
 </head>
 <body>
@@ -220,8 +237,16 @@ INDEX_HTML = """
     <canvas id="game" width="600" height="600"></canvas>
     <div class="controls">
       <button id="newGameBtn">New Game</button>
-      <span class="hint">Use arrow keys / WASD</span>
+      <span class="hint">Arrow keys / WASD / touch controls</span>
       <span class="state" id="stateLabel"></span>
+    </div>
+    <div class="dpad">
+      <button data-dir="up" class="dpad-btn">Up</button>
+      <div class="dpad-row">
+        <button data-dir="left" class="dpad-btn">Left</button>
+        <button data-dir="down" class="dpad-btn">Down</button>
+        <button data-dir="right" class="dpad-btn">Right</button>
+      </div>
     </div>
   </div>
 
@@ -233,7 +258,7 @@ INDEX_HTML = """
     const newGameBtn = document.getElementById("newGameBtn");
     let gameId = null;
     let state = null;
-    let tickMs = 130;
+    let tickMs = 180;
 
     const keyMap = {
       ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
@@ -324,6 +349,16 @@ INDEX_HTML = """
 
     newGameBtn.addEventListener("click", () => {
       newGame().catch(console.error);
+    });
+
+    document.querySelectorAll(".dpad-btn").forEach((btn) => {
+      const handler = (e) => {
+        e.preventDefault();
+        const dir = btn.dataset.dir;
+        turn(dir).catch(console.error);
+      };
+      btn.addEventListener("click", handler);
+      btn.addEventListener("touchstart", handler, { passive: false });
     });
 
     setInterval(() => tick().catch(console.error), tickMs);
