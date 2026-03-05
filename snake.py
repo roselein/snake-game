@@ -127,7 +127,7 @@ INDEX_HTML = """
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Snake (Python Backend)</title>
+  <title>University of Guam Charter Day</title>
   <style>
     :root {
       --bg: #101522;
@@ -209,6 +209,14 @@ INDEX_HTML = """
       opacity: 0.85;
       font-size: 0.9rem;
     }
+    .code-link {
+      color: #8dd7ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .code-link:hover {
+      text-decoration: underline;
+    }
     .state {
       font-weight: 700;
       color: #ffcf5d;
@@ -231,13 +239,14 @@ INDEX_HTML = """
 <body>
   <div class="card">
     <div class="top">
-      <h1>Snake</h1>
+      <h1>University of Guam Charter Day</h1>
       <div class="score">Score: <span id="score">0</span></div>
     </div>
     <canvas id="game" width="600" height="600"></canvas>
     <div class="controls">
       <button id="newGameBtn">New Game</button>
       <span class="hint">Arrow keys / WASD / touch controls</span>
+      <a class="code-link" href="https://github.com/roselein/snake-game" target="_blank" rel="noopener noreferrer">See the code</a>
       <span class="state" id="stateLabel"></span>
     </div>
     <div class="dpad">
